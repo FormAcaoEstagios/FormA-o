@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FormAção Estágio</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">F</span><span>FormAção <b>Estágio</b></span></div>
+    <div id="user-area" class="user-area hidden">
+      <span id="user-label"></span>
+      <button id="logout-btn" class="btn btn-outline">Sair</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="auth-screen" class="auth-layout">
+      <div class="hero">
+        <span class="eyebrow">PLATAFORMA EDUCACIONAL</span>
+        <h1>Aprender, acompanhar<br>e evoluir juntos.</h1>
+        <p>Um espaço para professores organizarem matérias e atividades e para alunos acompanharem sua jornada acadêmica.</p>
+        <div class="hero-tags"><span>Matérias</span><span>Atividades</span><span>Notas e ranking</span></div>
+      </div>
+      <div class="auth-card">
+        <div class="tabs">
+          <button class="tab active" data-tab="login">Entrar</button>
+          <button class="tab" data-tab="register">Criar conta</button>
+        </div>
+        <form id="login-form" class="auth-form">
+          <h2>Bem-vindo de volta</h2>
+          <label>E-mail</label>
+          <input id="login-email" type="email" placeholder="voce@email.com" required>
+          <label>Senha</label>
+          <input id="login-password" type="password" placeholder="Sua senha" required>
+          <button class="btn btn-primary full" type="submit">Entrar</button>
+        </form>
+        <form id="register-form" class="auth-form hidden">
+          <h2>Crie sua conta</h2>
+          <label>Nome completo</label>
+          <input id="register-name" type="text" placeholder="Seu nome" required>
+          <label>E-mail</label>
+          <input id="register-email" type="email" placeholder="voce@email.com" required>
+          <label>Senha (mínimo 6 caracteres)</label>
+          <input id="register-password" type="password" minlength="6" placeholder="Crie uma senha" required>
+          <label>Tipo de cadastro</label>
+          <select id="register-type" required>
+            <option value="aluno">Aluno</option>
+            <option value="professor">Professor (sujeito à aprovação)</option>
+          </select>
+          <p class="hint">Cadastros de professor ficam pendentes até a aprovação do administrador. Não é possível escolher administrador pelo cadastro.</p>
+          <button class="btn btn-primary full" type="submit">Criar conta</button>
+        </form>
+        <p id="auth-message" class="message" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section id="app-screen" class="app-layout hidden">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><span class="brand-mark">F</span><span>FormAção<br><b>Estágio</b></span></div>
+        <nav id="side-navigation" class="side-navigation" aria-label="Navegação principal"></nav>
+        <div class="sidebar-bottom">
+          <button type="button" id="profile-menu-btn" class="profile-menu">
+            <span class="avatar" id="profile-avatar">U</span>
+            <span class="profile-menu-text"><strong id="profile-name">Meu perfil</strong><small id="profile-role">Usuário</small></span>
+            <span class="profile-chevron">⌄</span>
+          </button>
+          <div id="profile-details" class="profile-details hidden">
+            <p><strong>Perfil da conta</strong></p>
+            <p id="profile-email"></p>
+            <p id="profile-type"></p>
+          </div>
+          <button type="button" id="sidebar-logout" class="sidebar-logout"><span>↪</span> Sair da conta</button>
+        </div>
+      </aside>
+      <div class="app-content">
+      <button type="button" id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Abrir menu">☰</button>
+      <div class="welcome-row">
+        <div><span class="eyebrow">FORMAÇÃO</span><h1 id="welcome-title">Olá!</h1><p id="welcome-subtitle">Acompanhe suas atividades.</p></div>
+        <span id="role-pill" class="role-pill"></span>
+      </div>
+
+      <section id="admin-panel" class="panel hidden page-section" data-page="admin-users">
+        <div class="section-heading"><div><span class="eyebrow">ADMINISTRAÇÃO</span><h2>Gerenciar usuários</h2></div></div>
+        <p class="muted">Analise as solicitações de professor e aprove somente pessoas autorizadas.</p>
+        <div id="users-list" class="table-wrap"></div>
+      </section>
+
+      <section id="teacher-panel" class="hidden">
+        <div id="teacher-home" class="dashboard-grid page-section">
+
+          <article class="panel">
+            <span class="eyebrow">ORGANIZAÇÃO</span><h2>Matricular aluno</h2>
+            <form id="enroll-form" class="stack">
+              <select id="enroll-subject" required></select>
+              <select id="enroll-student" required></select>
+              <button class="btn btn-primary" type="submit">Matricular aluno</button>
+            </form>
+          </article>
+
+
+        </div>
+        <section id="teacher-subjects-page" class="panel page-section"><div class="section-heading"><h2>Minhas matérias</h2><button id="refresh-teacher" class="btn btn-outline">Atualizar</button></div><div class="dashboard-grid">          <article class="panel">
+            <span class="eyebrow">ENSINO</span><h2>Criar matéria</h2>
+            <form id="subject-form" class="stack">
+              <input id="subject-name" placeholder="Nome da matéria" required>
+              <textarea id="subject-description" placeholder="Descrição (opcional)" rows="3"></textarea>
+              <button class="btn btn-primary" type="submit">Criar matéria</button>
+            </form>
+          </article>          <article class="panel">
+            <span class="eyebrow">AVALIAÇÃO</span><h2>Criar atividade</h2>
+            <form id="activity-form" class="stack">
+              <select id="activity-subject" required></select>
+              <input id="activity-title" placeholder="Título da atividade" required>
+              <textarea id="activity-description" placeholder="Orientações (opcional)" rows="3"></textarea>
+              <label>Prazo (opcional)</label><input id="activity-deadline" type="datetime-local">
+              <button class="btn btn-primary" type="submit">Publicar atividade</button>
+            </form>
+          </article></div>
+          <article class="panel"><h3>Alterar matéria</h3>
+            <form id="edit-subject-form" class="stack">
+              <label for="edit-subject-select">Selecione a matéria</label>
+              <select id="edit-subject-select" required><option value="">Selecione uma matéria</option></select>
+              <input id="edit-subject-name" placeholder="Nome da matéria" required>
+              <textarea id="edit-subject-description" rows="3" placeholder="Descrição da matéria"></textarea>
+              <div class="row-actions">
+                <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                <button type="button" id="delete-subject-btn" class="btn btn-outline" disabled>Excluir matéria</button>
+              </div>
+              <p class="muted">A exclusão é permanente e pode afetar atividades, matrículas, entregas e notas vinculadas.</p>
+            </form>
+          </article>
+          <article class="panel"><h3>Editar atividade existente</h3><form id="edit-activity-form" class="stack">
+          <select id="edit-activity-select" required><option value="">Selecione a atividade</option></select>
+          <input id="edit-activity-title" placeholder="Título" required>
+          <textarea id="edit-activity-description" rows="3" placeholder="Descrição"></textarea>
+          <label for="edit-activity-deadline">Prazo</label><input type="datetime-local" id="edit-activity-deadline">
+          <button type="submit" class="btn btn-primary">Salvar alterações da atividade</button></form></article>
+          <div id="teacher-subjects" class="cards"></div></section>
+        <section id="teacher-submissions-page" class="panel page-section"><div class="section-heading"><h2>Entregas dos alunos</h2></div><p class="muted">Selecione uma matéria para consultar as entregas dos alunos.</p><div class="stack ranking-controls"><label for="teacher-submissions-subject">Selecione a matéria</label><select id="teacher-submissions-subject"><option value="">Selecione a matéria</option></select></div>          <article class="panel">
+            <span class="eyebrow">NOTAS</span><h2>Lançar ou alterar nota</h2>
+            <form id="grade-form" class="stack">
+              <select id="grade-activity" required></select>
+              <select id="grade-student" required></select>
+              <input id="grade-value" type="number" min="0" max="10" step="0.01" placeholder="Nota de 0 a 10" required>
+              <textarea id="grade-feedback" placeholder="Feedback (opcional)" rows="2"></textarea>
+              <button class="btn btn-primary" type="submit">Salvar nota</button>
+            </form>
+          </article><div id="teacher-submissions" class="table-wrap"><p class="muted">As entregas aparecerão aqui.</p></div></section>
+        <section id="teacher-ranking-page" class="panel page-section">
+          <div class="section-heading"><div><span class="eyebrow">DESEMPENHO POR DISCIPLINA</span><h2>Ranking e notas das matérias</h2></div><button id="refresh-teacher-ranking" class="btn btn-outline" type="button">Atualizar</button></div>
+          <div class="stack ranking-controls"><label for="teacher-ranking-subject">Selecione a matéria</label><select id="teacher-ranking-subject"></select><button id="export-subject-excel" class="btn btn-primary" type="button">Exportar Excel desta matéria</button></div>
+          <h3>Ranking da matéria</h3><div id="teacher-ranking-list" class="list"><p class="muted">Selecione uma matéria para consultar o ranking.</p></div>
+          <h3>Notas lançadas</h3><p class="muted">Use Editar para alterar a nota ou o feedback de um aluno.</p><div id="teacher-grades-table" class="table-wrap"><p class="muted">Selecione uma matéria.</p></div>
+        </section>
+      </section>
+
+      <section id="pending-panel" class="panel hidden page-section">
+        <span class="eyebrow">CADASTRO EM ANÁLISE</span>
+        <h2>Solicitação de professor enviada</h2>
+        <p class="muted">Seu cadastro está aguardando aprovação do administrador. Enquanto isso, o painel de professor permanece bloqueado.</p>
+      </section>
+
+      <section id="student-panel" class="hidden">
+        <section id="student-grades-page" class="panel page-section"><span class="eyebrow">DESEMPENHO</span><h2>Minhas notas</h2><div class="stack ranking-controls"><label for="student-grades-subject">Selecione a matéria</label><select id="student-grades-subject"><option value="">Selecione a matéria</option></select></div><div id="student-grades" class="list"></div></section>
+        <section id="student-ranking-page" class="panel page-section"><span class="eyebrow">CLASSIFICAÇÃO</span><h2>Ranking por matéria</h2><div class="stack ranking-controls"><label for="student-ranking-subject">Selecione a matéria</label><select id="student-ranking-subject"></select></div><div id="ranking-list" class="list"><p class="muted">Selecione uma matéria.</p></div></section>
+        <section id="student-subjects-page" class="panel page-section"><div class="section-heading"><h2>Minhas matérias e atividades</h2><button id="refresh-student" class="btn btn-outline">Atualizar</button></div><div id="student-subjects" class="cards"></div></section>
+      </section>
+      <section id="profile-page" class="panel page-section hidden">
+        <span class="eyebrow">CONTA</span><h2>Meu perfil</h2>
+        <div class="profile-info-grid">
+          <div><small>Nome</small><strong id="profile-page-name">—</strong></div>
+          <div><small>E-mail</small><strong id="profile-page-email">—</strong></div>
+          <div><small>Tipo de acesso</small><strong id="profile-page-type">—</strong></div>
+        </div>
+      </section>
+      <p id="app-message" class="message" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+  <footer>FormAção Estágio · Ambiente de aprendizagem</footer>
+</body>
+</html>
